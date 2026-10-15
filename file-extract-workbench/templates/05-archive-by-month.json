@@ -1,0 +1,28 @@
+{
+  "name": "照片按拍摄月份归档",
+  "description": "照片、RAW、视频按 年-月/年-月-日 分文件夹",
+  "order": 5,
+  "plan": {
+    "rule": {
+      "mode": "all",
+      "items": [
+        {
+          "id": "t1",
+          "field": "kind",
+          "op": "in",
+          "value": [
+            "photo",
+            "raw",
+            "video"
+          ]
+        }
+      ]
+    },
+    "dest": {
+      "template": "{拍摄日期:yyyy-MM}/{拍摄日期:yyyy-MM-dd}",
+      "action": "copy",
+      "conflict": "rename",
+      "dedupe": true
+    }
+  }
+}

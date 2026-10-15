@@ -1,0 +1,34 @@
+{
+  "name": "某人的文档汇总",
+  "description": "Word、Excel、PPT、PDF 中作者或最后修改者是某人的，按作者分文件夹",
+  "order": 8,
+  "plan": {
+    "rule": {
+      "mode": "all",
+      "items": [
+        {
+          "id": "t1",
+          "field": "kind",
+          "op": "in",
+          "value": [
+            "word",
+            "sheet",
+            "slides",
+            "pdf"
+          ]
+        },
+        {
+          "id": "t2",
+          "field": "creator",
+          "op": "contains",
+          "value": ""
+        }
+      ]
+    },
+    "dest": {
+      "template": "{作者}",
+      "action": "copy",
+      "conflict": "rename"
+    }
+  }
+}

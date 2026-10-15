@@ -1,0 +1,905 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>多机位素材筛选拷贝</title>
+<style>
+:root{
+  --bg:#f3f4f6;--panel:#ffffff;--panel2:#f8f9fb;--text:#1f2329;--muted:#6b7280;--line:#e2e5ea;
+  --accent:#2457d6;--accent-ink:#ffffff;--accent-weak:#e9effd;--ok:#15803d;--ok-weak:#e7f6ec;
+  --warn:#b45309;--warn-weak:#fdf3e2;--err:#c62828;--err-weak:#fdecec;--focus:#2457d655;
+  --mono:ui-monospace,"Cascadia Mono",Consolas,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root{--bg:#111316;--panel:#1a1d22;--panel2:#20242a;--text:#e5e7eb;--muted:#9aa2ad;--line:#2d323a;
+  --accent:#6b93ff;--accent-ink:#0d1220;--accent-weak:#1e2a47;--ok:#4ade80;--ok-weak:#16301f;
+  --warn:#fbbf24;--warn-weak:#3a2d10;--err:#f87171;--err-weak:#3b1a1a;--focus:#6b93ff55;}
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--text)}
+body{font:14px/1.55 "Microsoft YaHei UI","Microsoft YaHei","PingFang SC","Hiragino Sans GB","Noto Sans CJK SC",system-ui,sans-serif}
+button,input,select,textarea{font:inherit;color:inherit}
+h1,h2,h3{margin:0;font-weight:600}
+.top{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 24px;background:var(--panel);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:12px}
+.logo{width:34px;height:34px;border-radius:9px;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;font-weight:700}
+.brand h1{font-size:17px}
+.brand p{margin:0;color:var(--muted);font-size:12.5px}
+.sys{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;background:var(--panel2);border:1px solid var(--line);font-size:12.5px;white-space:nowrap}
+.chip .dot{width:7px;height:7px;border-radius:50%;background:var(--muted)}
+.chip.ok .dot{background:var(--ok)} .chip.bad .dot{background:var(--err)}
+.wrap{max-width:1320px;margin:0 auto;padding:18px 24px 40px}
+.presetbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:16px;padding:10px 14px;background:var(--panel);border:1px solid var(--line);border-radius:10px}
+.presetbar .lbl{color:var(--muted)}
+.presetbar .sp{flex:1}
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 400px;gap:18px;align-items:start}
+@media (max-width:1040px){.layout{grid-template-columns:1fr}}
+.col-run{position:sticky;top:78px}
+@media (max-width:1040px){.col-run{position:static}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;margin-bottom:18px}
+.card>header{display:flex;align-items:center;gap:10px;padding:13px 18px;border-bottom:1px solid var(--line)}
+.card>header h2{font-size:15px}
+.card>header .num{width:22px;height:22px;border-radius:50%;background:var(--accent-weak);color:var(--accent);font-size:12px;font-weight:700;display:grid;place-items:center}
+.card>header .sp{flex:1}
+.card .body{padding:16px 18px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.field{margin-bottom:14px}
+.field:last-child{margin-bottom:0}
+.field>label.t,.field>.t{display:block;font-weight:600;margin-bottom:6px;font-size:13.5px}
+.hint{color:var(--muted);font-size:12.5px;margin-top:5px}
+.hint code,.vars code{font-family:var(--mono);font-size:12px;background:var(--panel2);border:1px solid var(--line);border-radius:4px;padding:0 4px}
+input[type=text],input[type=number],input[type=time],input[type=date],input[type=datetime-local],select,textarea{
+  height:34px;padding:0 10px;border:1px solid var(--line);border-radius:7px;background:var(--panel);min-width:0}
+textarea{height:auto;padding:6px 10px}
+input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid var(--focus);outline-offset:1px;border-color:var(--accent)}
+input.grow{flex:1;min-width:160px}
+input.num{width:96px}
+button{height:34px;padding:0 14px;border-radius:7px;border:1px solid var(--line);background:var(--panel);cursor:pointer;white-space:nowrap}
+button:hover{border-color:var(--accent)}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:600}
+button.primary:hover{filter:brightness(1.08)}
+button.danger{color:var(--err)}
+button.ghost{background:transparent}
+button.small{height:28px;padding:0 10px;font-size:12.5px}
+button:disabled{opacity:.45;cursor:not-allowed}
+.icon-btn{width:34px;padding:0;display:inline-grid;place-items:center}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;flex-wrap:wrap}
+.seg label{display:flex;align-items:center;cursor:pointer;margin:0}
+.seg input{position:absolute;opacity:0;pointer-events:none}
+.seg span{padding:6px 13px;border-right:1px solid var(--line);font-size:13px}
+.seg label:last-child span{border-right:0}
+.seg input:checked+span{background:var(--accent);color:var(--accent-ink)}
+.seg input:focus-visible+span{outline:2px solid var(--focus)}
+.check{display:inline-flex;align-items:center;gap:7px;cursor:pointer;user-select:none}
+.check input{width:16px;height:16px;accent-color:var(--accent)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:700px){.grid2{grid-template-columns:1fr}}
+.pair{display:grid;grid-template-columns:24px minmax(0,1fr) 20px minmax(0,1fr) 34px;gap:8px;align-items:center;margin-bottom:8px}
+.pair .idx{color:var(--muted);font-size:12px;text-align:center}
+.pair .arrow{color:var(--muted);text-align:center}
+.pathbox{display:flex;gap:6px;min-width:0}
+.pathbox input{flex:1;min-width:0}
+@media (max-width:700px){.pair{grid-template-columns:1fr}.pair .idx,.pair .arrow{text-align:left}}
+.block{border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:14px;background:var(--panel2)}
+.block>.bh{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.block>.bh h3{font-size:14px}
+.block.off .bbody{display:none}
+.win{display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chips label{display:inline-flex;align-items:center;gap:6px;padding:5px 11px;border:1px solid var(--line);border-radius:999px;cursor:pointer;background:var(--panel)}
+.chips input{accent-color:var(--accent)}
+.chips label.on{border-color:var(--accent);background:var(--accent-weak)}
+.vars{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.vars code{cursor:pointer}
+.vars code:hover{border-color:var(--accent)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:middle}
+th{color:var(--muted);font-weight:600;font-size:12.5px;background:var(--panel2);position:sticky;top:0}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+th{white-space:nowrap}
+td input[type=text]{height:28px;width:100%}
+.tblwrap{max-height:420px;overflow:auto;border:1px solid var(--line);border-radius:8px}
+.mono{font-family:var(--mono);font-size:12px}
+.muted{color:var(--muted)}
+.empty{color:var(--muted);text-align:center;padding:24px 10px}
+.banner{padding:10px 14px;border-radius:9px;margin-bottom:14px;font-size:13.5px}
+.banner.err{background:var(--err-weak);color:var(--err)}
+.banner.warn{background:var(--warn-weak);color:var(--warn)}
+.banner.info{background:var(--accent-weak);color:var(--accent)}
+.runbtns{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.runbtns .primary{grid-column:1/-1;height:40px;font-size:15px}
+.state{display:flex;align-items:center;gap:8px;margin:14px 0 8px;font-weight:600}
+.badge{font-size:12px;padding:2px 9px;border-radius:999px;background:var(--panel2);border:1px solid var(--line);font-weight:600}
+.badge.running{background:var(--accent-weak);color:var(--accent);border-color:transparent}
+.badge.done{background:var(--ok-weak);color:var(--ok);border-color:transparent}
+.badge.error,.badge.cancelled{background:var(--err-weak);color:var(--err);border-color:transparent}
+.bar{height:8px;background:var(--panel2);border:1px solid var(--line);border-radius:99px;overflow:hidden}
+.bar>i{display:block;height:100%;width:0;background:var(--accent);transition:width .3s}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+.stat{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+.stat b{display:block;font-size:18px;font-variant-numeric:tabular-nums}
+.stat span{font-size:12px;color:var(--muted)}
+.msg{margin-top:10px;font-size:13px}
+.log{margin-top:12px;height:230px;overflow:auto;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-family:var(--mono);font-size:12px;line-height:1.6;white-space:pre-wrap;word-break:break-all}
+.log .error{color:var(--err)} .log .warn{color:var(--warn)} .log .ok{color:var(--ok);font-weight:600} .log .file{color:var(--muted)}
+.after{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.tag{font-size:12px;padding:1px 8px;border-radius:99px;white-space:nowrap}
+.tag.copied,.tag.moved,.tag.new{background:var(--ok-weak);color:var(--ok)}
+.tag.skipped,.tag.exists{background:var(--warn-weak);color:var(--warn)}
+.tag.failed{background:var(--err-weak);color:var(--err)}
+dialog{border:1px solid var(--line);border-radius:12px;padding:0;background:var(--panel);color:var(--text);width:min(680px,94vw);box-shadow:0 20px 60px #0005}
+dialog::backdrop{background:#0006}
+.dlg-h{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--line)}
+.dlg-h h3{font-size:15px;flex:1}
+.dlg-b{padding:12px 16px}
+.dlg-f{display:flex;gap:8px;justify-content:flex-end;padding:12px 16px;border-top:1px solid var(--line);flex-wrap:wrap}
+.roots{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.dirlist{height:320px;overflow:auto;border:1px solid var(--line);border-radius:8px}
+.dirlist div{padding:7px 12px;cursor:pointer;border-bottom:1px solid var(--line);display:flex;gap:8px;align-items:center}
+.dirlist div:hover{background:var(--accent-weak)}
+.dirlist div::before{content:"";width:14px;height:11px;border-radius:2px;background:var(--warn);opacity:.75;flex:none}
+details.help summary{cursor:pointer;font-weight:600}
+details.help ol{margin:8px 0 0;padding-left:20px;color:var(--muted);font-size:13px}
+details.help li{margin-bottom:4px}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand">
+    <div class="logo">拷</div>
+    <div><h1>多机位素材筛选拷贝</h1><p>按条件从各机位文件夹挑选文件，拷贝到对应的机位目标文件夹</p></div>
+  </div>
+  <div class="sys">
+    <span id="sysChip" class="chip"><i class="dot"></i><span>正在连接引擎…</span></span>
+    <span id="engChip" class="chip" hidden></span>
+    <button id="btnQuit" class="small ghost">退出程序</button>
+  </div>
+</header>
+
+<div class="wrap">
+  <div id="fileBanner" class="banner err" hidden>
+    当前页面是直接用浏览器打开的文件，无法控制后台脚本。请关闭本页，双击工具目录里的启动脚本（Windows：<b>start-windows.bat</b>；macOS：<b>start-mac.command</b>），它会自动打开控制台。
+  </div>
+  <div id="connBanner" class="banner err" hidden></div>
+
+  <div class="presetbar">
+    <span class="lbl">方案</span>
+    <select id="presetSel" style="min-width:200px"><option value="">（未保存的当前设置）</option></select>
+    <button id="btnPresetLoad" class="small">载入</button>
+    <button id="btnPresetSave" class="small">保存方案…</button>
+    <button id="btnPresetDel" class="small danger">删除</button>
+    <span class="sp"></span>
+    <button id="btnExport" class="small ghost">导出 JSON</button>
+    <button id="btnImport" class="small ghost">导入 JSON</button>
+    <input id="importFile" type="file" accept=".json,application/json" hidden>
+    <button id="btnReset" class="small ghost">恢复默认</button>
+  </div>
+
+  <main class="layout">
+    <section>
+      <!-- 1 路径 -->
+      <div class="card">
+        <header><span class="num">1</span><h2>源目录与目标目录</h2><span class="sp"></span>
+          <button id="btnAddPair" class="small">＋ 添加一组</button></header>
+        <div class="body">
+          <div id="pairs"></div>
+          <p class="hint">源目录：放各机位文件夹的大文件夹。目标目录：本地存放结果的位置，机位文件夹会自动创建。路径可直接粘贴，也可点“浏览”。</p>
+
+          <div class="grid2" style="margin-top:14px">
+            <div class="field">
+              <span class="t">机位识别方式</span>
+              <div class="seg">
+                <label><input type="radio" name="cameraMode" data-k="cameraMode" value="subfolders"><span>每个子文件夹 = 一个机位</span></label>
+                <label><input type="radio" name="cameraMode" data-k="cameraMode" value="root"><span>源目录本身 = 一个机位</span></label>
+              </div>
+            </div>
+            <div class="field">
+              <span class="t">机位内部</span>
+              <div class="row">
+                <label class="check"><input type="checkbox" data-k="recursive">包含更深的子文件夹</label>
+                <label class="check"><input type="checkbox" data-k="keepStructure">保留子文件夹结构</label>
+              </div>
+            </div>
+          </div>
+
+          <div class="grid2" data-show="cameraMode=subfolders">
+            <div class="field">
+              <label class="t" for="camInc">只处理这些机位</label>
+              <input id="camInc" type="text" data-k="cameraInclude" placeholder="留空 = 全部；例如 机位*;Cam_*" style="width:100%">
+            </div>
+            <div class="field">
+              <label class="t" for="camExc">排除这些机位</label>
+              <input id="camExc" type="text" data-k="cameraExclude" placeholder="例如 备份*;temp" style="width:100%">
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="t" for="tpl">目标文件夹命名</label>
+            <input id="tpl" type="text" data-k="targetTemplate" style="width:100%" class="mono">
+            <div class="vars" id="tplVars">
+              <code data-v="{camera}">{camera} 机位名</code>
+              <code data-v="{source}">{source} 源目录名</code>
+              <code data-v="{date}">{date} 运行日期</code>
+              <code data-v="{time}">{time} 运行时刻</code>
+              <code data-v="{fileDate}">{fileDate} 文件日期</code>
+              <code data-v="{fileHour}">{fileHour} 文件小时</code>
+            </div>
+            <div class="hint">默认 <code>{camera}</code>：目标目录下按机位名建文件夹。可以用 <code>/</code> 分多级，例如 <code>{date}/{camera}</code>。示例结果：<span id="tplExample" class="mono"></span></div>
+          </div>
+
+          <div class="row">
+            <button id="btnScan">扫描机位</button>
+            <span class="hint" style="margin:0">扫描后可以勾选要处理的机位，或单独改目标文件夹名。</span>
+          </div>
+          <div id="camWrap" hidden style="margin-top:12px">
+            <div class="tblwrap" style="max-height:300px">
+              <table>
+                <thead><tr><th style="width:34px"><input type="checkbox" id="camAll" title="全选"></th><th>机位文件夹</th><th class="n">文件数</th><th class="n">大小</th><th style="width:38%">目标文件夹名（留空=同名）</th></tr></thead>
+                <tbody id="camBody"></tbody>
+              </table>
+            </div>
+            <div class="row" style="margin-top:8px"><span id="camErr" class="hint" style="margin:0"></span><span style="flex:1"></span><button id="btnClearOv" class="small ghost">清除机位设置</button></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2 条件 -->
+      <div class="card">
+        <header><span class="num">2</span><h2>筛选条件</h2><span class="sp"></span><span class="hint" style="margin:0">所有已开启的条件同时满足才会被选中</span></header>
+        <div class="body">
+          <div class="block" id="timeBlock">
+            <div class="bh"><label class="check"><input type="checkbox" data-k="time.enabled"><h3>按时间筛选</h3></label></div>
+            <div class="bbody">
+              <div class="field">
+                <span class="t">依据哪个时间</span>
+                <div class="seg">
+                  <label><input type="radio" name="tf" data-k="time.field" value="created"><span>创建时间</span></label>
+                  <label><input type="radio" name="tf" data-k="time.field" value="modified"><span>修改时间</span></label>
+                  <label><input type="radio" name="tf" data-k="time.field" value="exif"><span>拍摄时间 (EXIF)</span></label>
+                </div>
+                <div class="hint" id="fieldHint"></div>
+                <div class="row" data-show="time.field=exif" style="margin-top:8px">
+                  <span class="muted">读不到拍摄时间时：</span>
+                  <select data-k="time.exifFallback">
+                    <option value="modified">改用修改时间</option>
+                    <option value="created">改用创建时间</option>
+                    <option value="skip">跳过该文件</option>
+                  </select>
+                </div>
+              </div>
+              <div class="field">
+                <span class="t">时间范围方式</span>
+                <div class="seg">
+                  <label><input type="radio" name="tm" data-k="time.mode" value="daily"><span>每天的时段</span></label>
+                  <label><input type="radio" name="tm" data-k="time.mode" value="range"><span>具体日期时间</span></label>
+                  <label><input type="radio" name="tm" data-k="time.mode" value="recent"><span>最近一段时间</span></label>
+                </div>
+              </div>
+
+              <div data-show="time.mode=daily">
+                <div class="field">
+                  <span class="t">时段（可添加多个，满足任一即可）</span>
+                  <div id="wins"></div>
+                  <button id="btnAddWin" class="small">＋ 添加时段</button>
+                  <div class="hint">起止都包含在内；只写到分钟的结束时间包含整分钟（11:41 = 到 11:41:59）。开始晚于结束表示跨午夜。</div>
+                </div>
+                <div class="field">
+                  <span class="t">日期</span>
+                  <div class="row">
+                    <div class="seg">
+                      <label><input type="radio" name="dm" data-k="time.dateMode" value="any"><span>不限日期</span></label>
+                      <label><input type="radio" name="dm" data-k="time.dateMode" value="today"><span>仅运行当天</span></label>
+                      <label><input type="radio" name="dm" data-k="time.dateMode" value="fixed"><span>指定日期</span></label>
+                    </div>
+                    <input type="date" data-k="time.date" data-show="time.dateMode=fixed">
+                  </div>
+                </div>
+              </div>
+
+              <div data-show="time.mode=range" class="field">
+                <span class="t">日期时间范围（可添加多个）</span>
+                <div id="ranges"></div>
+                <button id="btnAddRange" class="small">＋ 添加范围</button>
+                <div class="hint">一端留空表示不限。</div>
+              </div>
+
+              <div data-show="time.mode=recent" class="field">
+                <span class="t">最近</span>
+                <div class="row">
+                  <input type="number" class="num" min="0" step="any" data-k="time.recentAmount">
+                  <select data-k="time.recentUnit"><option value="minutes">分钟</option><option value="hours">小时</option><option value="days">天</option></select>
+                  <span class="muted">内（从点击执行时往前算）</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="block">
+            <div class="bh"><h3>文件类型</h3><span class="sp" style="flex:1"></span>
+              <label class="check"><input type="checkbox" id="extAll">不限类型</label></div>
+            <div id="extBody">
+              <div class="chips" id="extGroups"></div>
+              <div class="row" style="margin-top:10px">
+                <span class="muted">其他扩展名</span>
+                <input type="text" data-k="ext.custom" class="grow" placeholder="例如 xmp, psd（逗号或空格分隔）">
+              </div>
+              <div class="hint" id="extHint"></div>
+            </div>
+          </div>
+
+          <div class="grid2">
+            <div class="block" style="margin-bottom:0">
+              <div class="bh"><h3>文件名</h3><span style="flex:1"></span><label class="check"><input type="checkbox" data-k="name.regex">正则表达式</label></div>
+              <div class="field"><input type="text" data-k="name.include" placeholder="包含：如 IMG_*;DSC*（留空=全部）" style="width:100%"></div>
+              <div class="field"><input type="text" data-k="name.exclude" placeholder="排除：如 *_edit*" style="width:100%"></div>
+              <div class="hint">多个用分号隔开；<code>*</code> 任意字符，<code>?</code> 单个字符；不区分大小写。</div>
+            </div>
+            <div class="block" style="margin-bottom:0">
+              <div class="bh"><h3>文件大小与数量</h3></div>
+              <div class="row field">
+                <input type="number" class="num" min="0" step="any" data-k="size.minMB" placeholder="最小">
+                <span class="muted">~</span>
+                <input type="number" class="num" min="0" step="any" data-k="size.maxMB" placeholder="最大">
+                <span class="muted">MB</span>
+              </div>
+              <div class="row">
+                <label class="check"><input type="checkbox" data-k="limit.enabled">每个机位最多</label>
+                <input type="number" class="num" min="1" step="1" data-k="limit.count">
+                <span class="muted">个，取</span>
+                <select data-k="limit.order"><option value="newest">最新的</option><option value="oldest">最早的</option></select>
+              </div>
+            </div>
+          </div>
+          <div style="margin-top:12px"><label class="check"><input type="checkbox" data-k="skipHidden">跳过隐藏文件和系统文件（.DS_Store、Thumbs.db 等）</label></div>
+        </div>
+      </div>
+
+      <!-- 3 执行 -->
+      <div class="card">
+        <header><span class="num">3</span><h2>执行方式</h2></header>
+        <div class="body">
+          <div class="grid2">
+            <div class="field">
+              <span class="t">操作</span>
+              <div class="seg">
+                <label><input type="radio" name="ac" data-k="action" value="copy"><span>拷贝（保留原文件）</span></label>
+                <label><input type="radio" name="ac" data-k="action" value="move"><span>移动（删除原文件）</span></label>
+              </div>
+            </div>
+            <div class="field">
+              <label class="t" for="conflict">目标已有同名文件时</label>
+              <select id="conflict" data-k="conflict" style="width:100%">
+                <option value="rename">自动改名（完全相同的文件跳过）</option>
+                <option value="skip">跳过</option>
+                <option value="overwrite">覆盖</option>
+                <option value="newer">源文件较新时覆盖</option>
+              </select>
+            </div>
+          </div>
+          <div class="row">
+            <label class="check"><input type="checkbox" data-k="preserveTimes">保留原文件的时间信息</label>
+            <label class="check"><input type="checkbox" data-k="verify">拷贝后校验文件大小</label>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 运行面板 -->
+    <aside class="col-run">
+      <div class="card">
+        <header><span class="num">4</span><h2>预览与执行</h2></header>
+        <div class="body">
+          <div class="runbtns">
+            <button id="btnRun" class="primary">开始执行</button>
+            <button id="btnPreview">先预览匹配结果</button>
+            <button id="btnStop" class="danger" disabled>停止</button>
+          </div>
+          <div class="state"><span id="stBadge" class="badge">空闲</span><span id="stPhase" class="muted" style="font-weight:400"></span><span style="flex:1"></span><span id="stTime" class="muted mono"></span></div>
+          <div class="bar"><i id="stBar"></i></div>
+          <div class="stats">
+            <div class="stat"><b id="sTotal">0</b><span>候选文件</span></div>
+            <div class="stat"><b id="sMatched">0</b><span>符合条件</span></div>
+            <div class="stat"><b id="sBytes">0</b><span>数据量</span></div>
+            <div class="stat"><b id="sCopied">0</b><span>已完成</span></div>
+            <div class="stat"><b id="sSkipped">0</b><span>跳过</span></div>
+            <div class="stat"><b id="sFailed">0</b><span>失败</span></div>
+          </div>
+          <div id="stMsg" class="msg"></div>
+          <div id="afterBtns" class="after" hidden></div>
+          <div id="log" class="log"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="body">
+          <details class="help">
+            <summary>使用说明</summary>
+            <ol>
+              <li>填写源目录（放各机位文件夹的大文件夹）和目标目录。</li>
+              <li>按需调整筛选条件。时间默认按“创建时间”，每天 11:38～11:41。</li>
+              <li>点“先预览匹配结果”，在下方核对每个机位的文件和时间。</li>
+              <li>确认无误后点“开始执行”。每次运行的明细都会保存成 CSV，放在工具目录的 logs 文件夹。</li>
+              <li>常用设置可“保存方案”，下次直接载入。</li>
+            </ol>
+          </details>
+        </div>
+      </div>
+    </aside>
+  </main>
+
+  <div class="card" id="resultCard" hidden>
+    <header><h2 id="resTitle">结果</h2><span class="sp"></span><span id="resNote" class="hint" style="margin:0"></span></header>
+    <div class="body">
+      <div class="tblwrap" style="max-height:260px;margin-bottom:14px">
+        <table>
+          <thead><tr><th>机位</th><th class="n">候选</th><th class="n">匹配</th><th class="n">大小</th><th class="n">完成</th><th class="n">跳过</th><th class="n">失败</th><th>候选文件的时间范围</th><th>目标文件夹</th></tr></thead>
+          <tbody id="camStats"></tbody>
+        </table>
+      </div>
+      <div class="row" style="margin-bottom:8px"><input id="itemFilter" type="text" placeholder="在结果中搜索文件名或机位" class="grow"><span id="itemCount" class="hint" style="margin:0"></span></div>
+      <div class="tblwrap">
+        <table>
+          <thead><tr><th>机位</th><th>文件</th><th>时间</th><th class="n">大小</th><th>状态</th><th>目标位置</th></tr></thead>
+          <tbody id="items"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<dialog id="dirDlg">
+  <div class="dlg-h"><h3 id="dirTitle">选择文件夹</h3><button class="small ghost" id="dirClose">关闭</button></div>
+  <div class="dlg-b">
+    <div class="roots" id="dirRoots"></div>
+    <div class="row" style="margin-bottom:8px">
+      <button class="small icon-btn" id="dirUp" title="上一级">↑</button>
+      <input type="text" id="dirPath" class="grow mono" placeholder="输入路径后按回车">
+    </div>
+    <div class="dirlist" id="dirList"></div>
+    <div id="dirErr" class="hint" style="color:var(--err)"></div>
+  </div>
+  <div class="dlg-f">
+    <button id="dirNative" class="ghost">用系统窗口选择…</button>
+    <span style="flex:1"></span>
+    <button id="dirCancel">取消</button>
+    <button id="dirOk" class="primary">选择当前文件夹</button>
+  </div>
+</dialog>
+
+<script>
+(function(){
+"use strict";
+var $ = function(id){ return document.getElementById(id); };
+var TOKEN = new URLSearchParams(location.search).get("t") || "";
+var LS_KEY = "mcct.config.v1";
+var EXT_GROUPS = {
+  photo: {label:"照片", list:["jpg","jpeg","png","heic","heif","tif","tiff","bmp","webp"]},
+  raw:   {label:"RAW 原片", list:["cr2","cr3","crw","nef","nrw","arw","srf","sr2","dng","raf","orf","rw2","pef","srw","3fr","iiq","x3f","erf","kdc","mos","mef","rwl"]},
+  video: {label:"视频", list:["mp4","mov","m4v","avi","mts","m2ts","mxf","mkv","wmv","3gp"]},
+  side:  {label:"附属文件", list:["xmp","thm","lrv","wav"]}
+};
+var FIELD_HINT = {
+  created: "文件在当前磁盘上被创建的时刻。注意：照片从存储卡拷到电脑后，Windows 上的创建时间通常会变成“拷贝的时刻”，若预览中时间都不对，请改用修改时间或拍摄时间。",
+  modified: "文件最后一次被写入的时刻。相机原片拷贝后一般仍保留拍摄时的值，通常比创建时间可靠。",
+  exif: "照片内部记录的拍摄时刻，最可靠，但需要读取每个文件，速度稍慢。支持 JPG 和大部分 RAW；视频等文件按下面的规则处理。"
+};
+var DEFAULTS = null, cfg = null, sysInfo = null, logSeq = 0, polling = false, lastScan = null, lastItems = [], currentPreset = "";
+
+function clone(o){ return JSON.parse(JSON.stringify(o)); }
+function merge(base, extra){
+  var out = clone(base);
+  if (!extra || typeof extra !== "object") return out;
+  Object.keys(extra).forEach(function(k){
+    var v = extra[k];
+    if (v && typeof v === "object" && !Array.isArray(v) && out[k] && typeof out[k] === "object" && !Array.isArray(out[k]) && k !== "cameraOverrides") out[k] = merge(out[k], v);
+    else out[k] = v;
+  });
+  return out;
+}
+function getPath(o, p){ return p.split(".").reduce(function(a,k){ return a == null ? undefined : a[k]; }, o); }
+function setPath(o, p, v){ var ks = p.split("."), x = o; for (var i=0;i<ks.length-1;i++){ if (x[ks[i]] == null || typeof x[ks[i]] !== "object") x[ks[i]] = {}; x = x[ks[i]]; } x[ks[ks.length-1]] = v; }
+function esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+function fmtBytes(n){ n = Number(n)||0; var u=["B","KB","MB","GB","TB"], i=0; while(n>=1024 && i<u.length-1){ n/=1024; i++; } return (i? n.toFixed(n<10?2:1):n) + " " + u[i]; }
+function fmtSec(s){ s = Math.round(s||0); var m = Math.floor(s/60); return (m? m+"分":"") + (s%60) + "秒"; }
+function today(){ var d=new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+function basename(p){ return String(p||"").replace(/[\\\/]+$/,"").split(/[\\\/]/).pop(); }
+
+function api(name, body){
+  return fetch("/api/" + name, {method:"POST", headers:{"Content-Type":"application/json","X-Token":TOKEN}, body:JSON.stringify(body||{})})
+    .then(function(r){ return r.json().catch(function(){ return {error:"HTTP " + r.status}; }).then(function(j){ if (!r.ok || j.error) throw new Error(j.error || ("HTTP " + r.status)); return j; }); });
+}
+function toast(msg, kind){ var b = $("connBanner"); b.className = "banner " + (kind||"err"); b.textContent = msg; b.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(function(){ b.hidden = true; }, kind === "err" ? 9000 : 4000); }
+
+/* ---------------- 绑定 ---------------- */
+function readField(el){
+  var k = el.dataset.k, v;
+  if (el.type === "checkbox") v = el.checked;
+  else if (el.type === "radio"){ if (!el.checked) return; v = el.value; }
+  else if (el.type === "number") v = el.value === "" ? null : Number(el.value);
+  else v = el.value;
+  setPath(cfg, k, v);
+}
+function writeFields(){
+  document.querySelectorAll("[data-k]").forEach(function(el){
+    var v = getPath(cfg, el.dataset.k);
+    if (el.type === "checkbox") el.checked = !!v;
+    else if (el.type === "radio") el.checked = (String(v) === el.value);
+    else el.value = (v == null ? "" : v);
+  });
+  $("extAll").checked = cfg.ext.mode === "all";
+  renderPairs(); renderWins(); renderRanges(); renderExt(); refreshUI();
+}
+function refreshUI(){
+  document.querySelectorAll("[data-show]").forEach(function(el){
+    var parts = el.dataset.show.split("="), v = String(getPath(cfg, parts[0]));
+    el.hidden = parts[1].split("|").indexOf(v) < 0;
+  });
+  $("timeBlock").classList.toggle("off", !cfg.time.enabled);
+  $("extBody").style.display = cfg.ext.mode === "all" ? "none" : "";
+  var hint = FIELD_HINT[cfg.time.field] || "";
+  if (sysInfo && !sysInfo.supportsCreated && cfg.time.field === "created") hint += " 【当前系统无法读取创建时间，将自动改用修改时间】";
+  $("fieldHint").textContent = hint;
+  var tpl = cfg.targetTemplate || "{camera}";
+  var d = new Date(), ymd = today().replace(/-/g,"");
+  var ex = tpl.replace(/\{camera\}/g,"机位A").replace(/\{source\}/g,"原片").replace(/\{date\}/g, ymd).replace(/\{time\}/g,"113800").replace(/\{fileDate\}/g, ymd).replace(/\{fileHour\}/g,"11");
+  var t0 = (cfg.pairs[0] && cfg.pairs[0].target) || (sysInfo && sysInfo.os === "windows" ? "D:\\交付" : "/Users/你/交付");
+  var sep = (sysInfo && sysInfo.sep) || "\\";
+  $("tplExample").textContent = t0.replace(/[\\\/]+$/,"") + sep + ex.split(/[\\\/]+/).filter(Boolean).join(sep);
+  var n = buildExtList().length;
+  $("extHint").textContent = cfg.ext.mode === "all" ? "" : ("当前共 " + n + " 种扩展名：" + buildExtList().join(", "));
+}
+function onChange(){
+  refreshUI();
+  try { localStorage.setItem(LS_KEY, JSON.stringify(cfg)); } catch(e){}
+}
+document.addEventListener("input", function(e){ var el = e.target; if (el.dataset && el.dataset.k && el.type !== "radio" && el.type !== "checkbox"){ readField(el); onChange(); } });
+document.addEventListener("change", function(e){ var el = e.target; if (el.dataset && el.dataset.k){ readField(el); onChange(); } });
+
+/* ---------------- 路径组 ---------------- */
+function renderPairs(){
+  if (!cfg.pairs.length) cfg.pairs.push({source:"", target:""});
+  var box = $("pairs"); box.innerHTML = "";
+  cfg.pairs.forEach(function(p, i){
+    var row = document.createElement("div"); row.className = "pair";
+    row.innerHTML = '<span class="idx">' + (i+1) + '</span>' +
+      '<div class="pathbox"><input type="text" placeholder="源目录（各机位文件夹所在的大文件夹）" value="' + esc(p.source) + '" data-role="source"><button class="small" data-role="bs">浏览</button></div>' +
+      '<span class="arrow">→</span>' +
+      '<div class="pathbox"><input type="text" placeholder="目标目录（不存在会自动创建）" value="' + esc(p.target) + '" data-role="target"><button class="small" data-role="bt">浏览</button></div>' +
+      '<button class="small icon-btn ghost danger" data-role="del" title="删除这一组"' + (cfg.pairs.length < 2 ? " disabled" : "") + '>✕</button>';
+    row.querySelector('[data-role=source]').addEventListener("input", function(e){ p.source = e.target.value; onChange(); });
+    row.querySelector('[data-role=target]').addEventListener("input", function(e){ p.target = e.target.value; onChange(); });
+    row.querySelector('[data-role=bs]').onclick = function(){ openDir("选择源目录", p.source, function(v){ p.source = v; renderPairs(); onChange(); }); };
+    row.querySelector('[data-role=bt]').onclick = function(){ openDir("选择目标目录", p.target || p.source, function(v){ p.target = v; renderPairs(); onChange(); }); };
+    row.querySelector('[data-role=del]').onclick = function(){ cfg.pairs.splice(i,1); renderPairs(); onChange(); };
+    box.appendChild(row);
+  });
+}
+$("btnAddPair").onclick = function(){ cfg.pairs.push({source:"", target:""}); renderPairs(); onChange(); };
+
+/* ---------------- 时段 ---------------- */
+function renderList(boxId, list, type, makeEmpty, label){
+  var box = $(boxId); box.innerHTML = "";
+  if (!list.length) list.push(makeEmpty());
+  list.forEach(function(w, i){
+    var row = document.createElement("div"); row.className = "win";
+    row.innerHTML = '<span class="muted">' + label + (i+1) + '</span><input type="' + type + '" step="1" value="' + esc(w.start) + '" data-r="start"><span class="muted">至</span><input type="' + type + '" step="1" value="' + esc(w.end) + '" data-r="end">' +
+      (type === "datetime-local" ? '<button class="small ghost" data-r="today">填今天</button>' : "") +
+      '<button class="small icon-btn ghost danger" data-r="del" title="删除"' + (list.length < 2 ? " disabled" : "") + '>✕</button>';
+    row.querySelectorAll("input").forEach(function(inp){ inp.addEventListener("input", function(){ w[inp.dataset.r] = inp.value; onChange(); }); inp.addEventListener("change", function(){ w[inp.dataset.r] = inp.value; onChange(); }); });
+    var tb = row.querySelector('[data-r=today]');
+    if (tb) tb.onclick = function(){ var d = today(); w.start = d + "T" + ((w.start||"").split("T")[1] || "00:00:00"); w.end = d + "T" + ((w.end||"").split("T")[1] || "23:59:59"); renderRanges(); onChange(); };
+    row.querySelector('[data-r=del]').onclick = function(){ list.splice(i,1); renderList(boxId, list, type, makeEmpty, label); onChange(); };
+    box.appendChild(row);
+  });
+}
+function renderWins(){ renderList("wins", cfg.time.windows, "time", function(){ return {start:"", end:""}; }, "时段"); }
+function renderRanges(){ renderList("ranges", cfg.time.ranges, "datetime-local", function(){ return {start:"", end:""}; }, "范围"); }
+$("btnAddWin").onclick = function(){ cfg.time.windows.push({start:"", end:""}); renderWins(); onChange(); };
+$("btnAddRange").onclick = function(){ cfg.time.ranges.push({start:"", end:""}); renderRanges(); onChange(); };
+
+/* ---------------- 扩展名 ---------------- */
+function renderExt(){
+  var box = $("extGroups"); box.innerHTML = "";
+  var groups = cfg.ext.groups || (cfg.ext.groups = []);
+  Object.keys(EXT_GROUPS).forEach(function(k){
+    var g = EXT_GROUPS[k], on = groups.indexOf(k) >= 0;
+    var l = document.createElement("label"); if (on) l.className = "on";
+    l.title = g.list.join(", ");
+    l.innerHTML = '<input type="checkbox"' + (on ? " checked" : "") + '> ' + g.label;
+    l.querySelector("input").onchange = function(e){
+      var i = groups.indexOf(k);
+      if (e.target.checked && i < 0) groups.push(k); else if (!e.target.checked && i >= 0) groups.splice(i,1);
+      renderExt(); onChange();
+    };
+    box.appendChild(l);
+  });
+}
+function buildExtList(){
+  var set = [];
+  (cfg.ext.groups||[]).forEach(function(k){ (EXT_GROUPS[k] ? EXT_GROUPS[k].list : []).forEach(function(x){ if (set.indexOf(x) < 0) set.push(x); }); });
+  String(cfg.ext.custom||"").split(/[\s,，;；]+/).forEach(function(x){ x = x.trim().toLowerCase().replace(/^\*?\./,""); if (x && set.indexOf(x) < 0) set.push(x); });
+  return set;
+}
+$("extAll").onchange = function(e){ cfg.ext.mode = e.target.checked ? "all" : "list"; onChange(); };
+
+/* ---------------- 命名变量 ---------------- */
+$("tplVars").addEventListener("click", function(e){
+  var c = e.target.closest("code"); if (!c) return;
+  var inp = $("tpl"), v = c.dataset.v, s = inp.selectionStart == null ? inp.value.length : inp.selectionStart;
+  inp.value = inp.value.slice(0, s) + v + inp.value.slice(inp.selectionEnd == null ? s : inp.selectionEnd);
+  cfg.targetTemplate = inp.value; onChange(); inp.focus();
+});
+
+/* ---------------- 配置载荷 ---------------- */
+function payload(){
+  var c = clone(cfg);
+  c.ext.list = buildExtList();
+  // 日期与时间之间用空格，避免某些 PowerShell 版本把 ISO 文本自动转成日期而丢失“是否写了秒”的信息
+  (c.time.ranges || []).forEach(function(r){ r.start = String(r.start||"").replace("T"," "); r.end = String(r.end||"").replace("T"," "); });
+  c.pairs = c.pairs.filter(function(p){ return (p.source||"").trim() || (p.target||"").trim(); });
+  return c;
+}
+
+/* ---------------- 机位扫描 ---------------- */
+$("btnScan").onclick = function(){
+  var b = this; b.disabled = true; b.textContent = "扫描中…";
+  api("scan", {config: payload()}).then(function(r){ lastScan = r; renderCams(); })
+    .catch(function(e){ toast(e.message); })
+    .then(function(){ b.disabled = false; b.textContent = "扫描机位"; });
+};
+function renderCams(){
+  if (!lastScan) return;
+  $("camWrap").hidden = false;
+  var body = $("camBody"); body.innerHTML = "";
+  var ov = cfg.cameraOverrides || (cfg.cameraOverrides = {});
+  if (!lastScan.cameras.length) body.innerHTML = '<tr><td colspan="5" class="empty">没有找到机位文件夹</td></tr>';
+  var multi = cfg.pairs.length > 1;
+  lastScan.cameras.forEach(function(c){
+    var o = ov[c.key] || {};
+    var tr = document.createElement("tr");
+    tr.innerHTML = '<td><input type="checkbox"' + (o.enabled === false ? "" : " checked") + '></td>' +
+      '<td title="' + esc(c.path) + '">' + esc(c.name) + (multi ? ' <span class="muted">（第' + (c.pair+1) + '组）</span>' : '') + '</td>' +
+      '<td class="n">' + c.files + '</td><td class="n">' + fmtBytes(c.bytes) + '</td>' +
+      '<td><input type="text" placeholder="' + esc(c.name) + '" value="' + esc(o.target||"") + '"></td>';
+    var inputs = tr.querySelectorAll("input");
+    inputs[0].onchange = function(e){ o.enabled = e.target.checked; ov[c.key] = o; onChange(); syncCamAll(); };
+    inputs[1].oninput = function(e){ o.target = e.target.value; ov[c.key] = o; onChange(); };
+    body.appendChild(tr);
+  });
+  $("camErr").textContent = (lastScan.errors||[]).join("；");
+  syncCamAll();
+}
+function syncCamAll(){
+  var boxes = $("camBody").querySelectorAll("td:first-child input");
+  var all = true; boxes.forEach(function(b){ if (!b.checked) all = false; });
+  $("camAll").checked = all && boxes.length > 0;
+}
+$("camAll").onchange = function(e){
+  var on = e.target.checked, ov = cfg.cameraOverrides;
+  (lastScan ? lastScan.cameras : []).forEach(function(c){ var o = ov[c.key] || {}; o.enabled = on; ov[c.key] = o; });
+  renderCams(); onChange();
+};
+$("btnClearOv").onclick = function(){ cfg.cameraOverrides = {}; renderCams(); onChange(); };
+
+/* ---------------- 运行 ---------------- */
+function validate(){
+  var c = payload();
+  if (!c.pairs.length) return "请先填写源目录和目标目录";
+  for (var i=0;i<c.pairs.length;i++){
+    if (!(c.pairs[i].source||"").trim()) return "第 " + (i+1) + " 组缺少源目录";
+    if (!(c.pairs[i].target||"").trim()) return "第 " + (i+1) + " 组缺少目标目录";
+  }
+  if (c.ext.mode !== "all" && !c.ext.list.length) return "请至少选择一种文件类型，或勾选“不限类型”";
+  return "";
+}
+function start(mode){
+  var err = validate(); if (err) { toast(err); return; }
+  if (mode === "run"){
+    var verb = cfg.action === "move" ? "移动" : "拷贝";
+    var msg = "确认开始" + verb + "？\n\n" + payload().pairs.map(function(p){ return p.source + "\n  → " + p.target; }).join("\n");
+    if (cfg.action === "move") msg += "\n\n注意：移动会删除源目录中的原文件。";
+    if (!confirm(msg)) return;
+  }
+  logSeq = 0; $("log").innerHTML = ""; $("afterBtns").hidden = true; lastItems = [];
+  api("start", {mode: mode, config: payload()}).then(function(){ setRunning(true); poll(); })
+    .catch(function(e){ toast(e.message); });
+}
+$("btnPreview").onclick = function(){ start("preview"); };
+$("btnRun").onclick = function(){ start("run"); };
+$("btnStop").onclick = function(){ api("cancel").catch(function(e){ toast(e.message); }); };
+function setRunning(on){ $("btnRun").disabled = on; $("btnPreview").disabled = on; $("btnStop").disabled = !on; $("btnScan").disabled = on; }
+
+var STATE = {idle:"空闲", running:"运行中", done:"已完成", cancelled:"已停止", error:"出错"};
+function poll(){
+  if (polling) return; polling = true;
+  api("status", {since: logSeq}).then(function(s){
+    polling = false; renderStatus(s);
+    if (s.state === "running") setTimeout(poll, 500);
+    else {
+      setRunning(false);
+      api("status", {since: logSeq, withItems: true}).then(function(f){ renderStatus(f); renderResults(f); });
+    }
+  }).catch(function(e){ polling = false; toast("与引擎的连接中断：" + e.message); setRunning(false); });
+}
+function renderStatus(s){
+  var b = $("stBadge"); b.textContent = (s.mode === "preview" && s.state !== "idle" ? "预览 · " : "") + (STATE[s.state] || s.state); b.className = "badge " + s.state;
+  $("stPhase").textContent = s.state === "running" ? s.phase : "";
+  $("stTime").textContent = s.elapsed != null ? fmtSec(s.elapsed) : "";
+  var pct = 0;
+  if (s.state === "running"){
+    if (s.phase === "拷贝文件" || s.phase === "移动文件") pct = s.bytesTotal ? s.bytesDone / s.bytesTotal : (s.matched ? s.processed / s.matched : 0);
+    else pct = s.total ? s.checked / s.total : 0;
+  } else if (s.state === "done") pct = 1;
+  $("stBar").style.width = Math.min(100, pct * 100).toFixed(1) + "%";
+  $("sTotal").textContent = s.total || 0;
+  $("sMatched").textContent = s.matched || 0;
+  $("sBytes").textContent = fmtBytes(s.bytesTotal);
+  $("sCopied").textContent = s.copied || 0;
+  $("sSkipped").textContent = s.skipped || 0;
+  $("sFailed").textContent = s.failed || 0;
+  var msg = $("stMsg"); msg.textContent = s.message || ""; msg.style.color = s.state === "error" ? "var(--err)" : "";
+  var log = $("log");
+  (s.logs||[]).forEach(function(l){
+    var d = document.createElement("div"); d.className = l.level; d.textContent = l.t + "  " + l.msg; log.appendChild(d);
+  });
+  while (log.childNodes.length > 1500) log.removeChild(log.firstChild);
+  if (s.logs && s.logs.length) log.scrollTop = log.scrollHeight;
+  if (s.logSeq) logSeq = s.logSeq;
+  if (s.state !== "running" && s.state !== "idle"){
+    var ab = $("afterBtns"); ab.innerHTML = "";
+    (s.targets||[]).forEach(function(t){ addAfter(ab, "打开目标：" + basename(t), t); });
+    if (s.logFile) addAfter(ab, "打开明细 CSV", s.logFile);
+    ab.hidden = !ab.childNodes.length;
+  }
+}
+function addAfter(box, label, path){
+  var b = document.createElement("button"); b.className = "small"; b.textContent = label; b.title = path;
+  b.onclick = function(){ api("open_path", {path: path}).catch(function(e){ toast(e.message); }); };
+  box.appendChild(b);
+}
+var RES = {copied:"已拷贝", moved:"已移动", skipped:"已跳过", failed:"失败", "new":"将拷贝", exists:"目标已存在"};
+function renderResults(s){
+  if (!s.cameras || !s.cameras.length) return;
+  $("resultCard").hidden = false;
+  $("resTitle").textContent = s.mode === "preview" ? "预览结果（尚未拷贝）" : "执行结果";
+  $("resNote").textContent = s.timeDesc ? ("时间条件：" + s.timeDesc) : "";
+  var tb = $("camStats"); tb.innerHTML = "";
+  s.cameras.forEach(function(c){
+    var tr = document.createElement("tr");
+    tr.innerHTML = "<td>" + esc(c.name) + "</td><td class='n'>" + c.candidates + "</td><td class='n'><b>" + c.matched + "</b></td><td class='n'>" + fmtBytes(c.matchedBytes) + "</td><td class='n'>" + c.copied + "</td><td class='n'>" + c.skipped + "</td><td class='n'>" + c.failed +
+      "</td><td class='mono muted'>" + (c.tMin ? esc(c.tMin) + " ~ " + esc(c.tMax.slice(11)) : "—") + "</td><td class='mono muted' title='" + esc(c.target) + "'>" + esc(c.target) + "</td>";
+    tb.appendChild(tr);
+  });
+  lastItems = s.items || [];
+  $("resultCard").dataset.trunc = s.itemsTruncated ? "1" : "";
+  renderItems();
+  $("resultCard").scrollIntoView({behavior:"smooth", block:"start"});
+}
+function renderItems(){
+  var q = $("itemFilter").value.trim().toLowerCase();
+  var list = q ? lastItems.filter(function(it){ return (it.camera + " " + it.rel).toLowerCase().indexOf(q) >= 0; }) : lastItems;
+  var tb = $("items"); tb.innerHTML = "";
+  var max = 1000, shown = list.slice(0, max);
+  if (!shown.length) tb.innerHTML = '<tr><td colspan="6" class="empty">没有符合条件的文件。可以看上表“候选文件的时间范围”，判断时间条件或时间依据是否需要调整。</td></tr>';
+  var frag = document.createDocumentFragment();
+  shown.forEach(function(it){
+    var tr = document.createElement("tr");
+    tr.innerHTML = "<td>" + esc(it.camera) + "</td><td class='mono'>" + esc(it.rel) + "</td><td class='mono'>" + esc(it.time) + (it.tsrc ? " <span class='muted'>" + esc(it.tsrc) + "</span>" : "") +
+      "</td><td class='n'>" + fmtBytes(it.size) + "</td><td><span class='tag " + esc(it.result) + "'>" + esc(RES[it.result] || it.result) + "</span>" + (it.note ? " <span class='muted'>" + esc(it.note) + "</span>" : "") +
+      "</td><td class='mono muted' title='" + esc(it.dest) + "'>" + esc(it.dest) + "</td>";
+    frag.appendChild(tr);
+  });
+  tb.appendChild(frag);
+  var note = "共 " + list.length + " 条" + (list.length > max ? "，只显示前 " + max + " 条" : "") + ($("resultCard").dataset.trunc ? "；完整清单见 CSV" : "");
+  $("itemCount").textContent = note;
+}
+$("itemFilter").addEventListener("input", renderItems);
+
+/* ---------------- 文件夹选择 ---------------- */
+var dirCb = null, dirCur = "";
+function openDir(title, initial, cb){
+  dirCb = cb; $("dirTitle").textContent = title; $("dirErr").textContent = "";
+  $("dirDlg").showModal();
+  loadDir(initial || "").catch(function(){ loadDir(""); });
+}
+function loadDir(p){
+  return api("list_dir", {path: p}).then(function(r){
+    dirCur = r.path; $("dirPath").value = r.path; $("dirErr").textContent = "";
+    $("dirUp").disabled = r.parent == null;
+    $("dirUp").dataset.p = r.parent == null ? "" : r.parent;
+    var roots = $("dirRoots"); roots.innerHTML = "";
+    (r.roots||[]).forEach(function(x){ var b = document.createElement("button"); b.className = "small"; b.textContent = x.name; b.title = x.path; b.onclick = function(){ loadDir(x.path); }; roots.appendChild(b); });
+    var list = $("dirList"); list.innerHTML = "";
+    if (!r.path) list.innerHTML = '<p class="empty">请在上方选择磁盘或常用位置</p>';
+    else if (!r.dirs.length) list.innerHTML = '<p class="empty">（没有子文件夹）</p>';
+    r.dirs.forEach(function(d){ var el = document.createElement("div"); el.textContent = d.name; el.title = d.path; el.onclick = function(){ loadDir(d.path); }; list.appendChild(el); });
+    $("dirOk").disabled = !r.path;
+  }).catch(function(e){ $("dirErr").textContent = e.message; throw e; });
+}
+$("dirUp").onclick = function(){ loadDir(this.dataset.p || "").catch(function(){}); };
+$("dirPath").addEventListener("keydown", function(e){ if (e.key === "Enter"){ e.preventDefault(); loadDir(this.value).catch(function(){}); } });
+$("dirOk").onclick = function(){ if (dirCur && dirCb) dirCb(dirCur); $("dirDlg").close(); };
+$("dirCancel").onclick = $("dirClose").onclick = function(){ $("dirDlg").close(); };
+$("dirNative").onclick = function(){
+  var b = this; b.disabled = true; b.textContent = "请在弹出的系统窗口中选择…";
+  api("pick_dir", {initial: dirCur, title: $("dirTitle").textContent}).then(function(r){
+    if (r.path){ if (dirCb) dirCb(r.path); $("dirDlg").close(); }
+    else if (r.unsupported) $("dirErr").textContent = "当前系统不支持系统选择窗口，请在本窗口中选择。";
+  }).catch(function(e){ $("dirErr").textContent = e.message; })
+    .then(function(){ b.disabled = false; b.textContent = "用系统窗口选择…"; });
+};
+
+/* ---------------- 方案 ---------------- */
+function loadPresetList(sel){
+  return api("presets_list").then(function(r){
+    var s = $("presetSel"); s.innerHTML = '<option value="">（未保存的当前设置）</option>';
+    r.presets.forEach(function(p){ var o = document.createElement("option"); o.value = p.file; o.textContent = p.name + (p.savedAt ? "  · " + p.savedAt.slice(0,16) : ""); o.dataset.name = p.name; s.appendChild(o); });
+    s.value = sel || currentPreset || "";
+  });
+}
+function applyConfig(c){ cfg = merge(DEFAULTS, c); lastScan = null; $("camWrap").hidden = true; writeFields(); onChange(); }
+$("btnPresetLoad").onclick = function(){
+  var f = $("presetSel").value; if (!f) return;
+  api("presets_load", {file: f}).then(function(r){ currentPreset = f; applyConfig(r.config); toast("已载入方案：" + r.name, "info"); }).catch(function(e){ toast(e.message); });
+};
+$("btnPresetSave").onclick = function(){
+  var opt = $("presetSel").selectedOptions[0];
+  var name = prompt("方案名称：", opt && opt.value ? opt.dataset.name : "");
+  if (!name) return;
+  api("presets_save", {name: name, config: cfg}).then(function(r){ currentPreset = r.file; return loadPresetList(r.file); })
+    .then(function(){ toast("方案已保存", "info"); }).catch(function(e){ toast(e.message); });
+};
+$("btnPresetDel").onclick = function(){
+  var f = $("presetSel").value; if (!f) return;
+  if (!confirm("删除方案“" + $("presetSel").selectedOptions[0].dataset.name + "”？")) return;
+  api("presets_delete", {file: f}).then(function(){ currentPreset = ""; return loadPresetList(""); }).catch(function(e){ toast(e.message); });
+};
+$("btnExport").onclick = function(){
+  var blob = new Blob([JSON.stringify({name: "导出的方案", tool: "mcct", version: 1, config: cfg}, null, 2)], {type: "application/json"});
+  var a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "方案-" + today() + ".json"; a.click();
+  setTimeout(function(){ URL.revokeObjectURL(a.href); }, 2000);
+};
+$("btnImport").onclick = function(){ $("importFile").click(); };
+$("importFile").onchange = function(e){
+  var f = e.target.files[0]; if (!f) return;
+  f.text().then(function(t){ var d = JSON.parse(t); applyConfig(d.config || d); toast("已导入：" + f.name, "info"); })
+    .catch(function(err){ toast("导入失败：" + err.message); });
+  e.target.value = "";
+};
+$("btnReset").onclick = function(){ if (confirm("恢复默认设置？（当前路径也会清空）")) { currentPreset = ""; $("presetSel").value = ""; applyConfig({}); } };
+
+$("btnQuit").onclick = function(){
+  if (!confirm("退出程序？正在运行的任务会被停止。")) return;
+  api("shutdown").then(function(){
+    document.body.innerHTML = '<div style="max-width:520px;margin:20vh auto;text-align:center;font-size:16px;line-height:1.8">程序已退出，可以关闭此页面。<br><span style="color:var(--muted);font-size:14px">下次使用请再次双击启动脚本。</span></div>';
+  }).catch(function(e){ toast(e.message); });
+};
+
+/* ---------------- 启动 ---------------- */
+function init(){
+  if (location.protocol === "file:"){ $("fileBanner").hidden = false; $("sysChip").className = "chip bad"; $("sysChip").lastChild.textContent = "未连接引擎"; return; }
+  api("info").then(function(info){
+    sysInfo = info; DEFAULTS = info.defaults;
+    $("sysChip").className = "chip ok"; $("sysChip").lastChild.textContent = info.osLabel;
+    var e = $("engChip"); e.hidden = false; e.textContent = info.engine + " " + info.engineVersion + " 引擎";
+    var saved = null; try { saved = JSON.parse(localStorage.getItem(LS_KEY) || "null"); } catch(x){}
+    cfg = merge(DEFAULTS, saved || {});
+    writeFields();
+    loadPresetList();
+    return api("status", {since: 0, withItems: true}).then(function(s){
+      if (s.state === "running"){ renderStatus(s); setRunning(true); setTimeout(poll, 300); }
+      else if (s.state !== "idle"){ renderStatus(s); renderResults(s); }
+    });
+  }).catch(function(err){
+    $("sysChip").className = "chip bad"; $("sysChip").lastChild.textContent = "未连接引擎";
+    var b = $("connBanner"); b.className = "banner err"; b.hidden = false;
+    b.textContent = "无法连接后台引擎（" + err.message + "）。请确认启动脚本的窗口仍然开着，必要时关闭本页重新双击启动脚本。";
+  });
+}
+init();
+})();
+</script>
+</body>
+</html>

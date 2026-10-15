@@ -1,0 +1,16 @@
+{
+  "name": "按文件类型分类整理",
+  "description": "所有文件按照片、视频、文档等类型分到不同文件夹",
+  "order": 6,
+  "plan": {
+    "rule": {
+      "mode": "all",
+      "items": []
+    },
+    "dest": {
+      "template": "{类型}",
+      "action": "copy",
+      "conflict": "rename"
+    }
+  }
+}

@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>文件提取工作台</title>
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<header class="top">
+  <div class="brand">
+    <svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><rect x="1.5" y="4.5" width="23" height="17" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.6"/><g fill="currentColor"><rect x="4" y="6.5" width="2" height="2" rx=".5"/><rect x="9" y="6.5" width="2" height="2" rx=".5"/><rect x="14" y="6.5" width="2" height="2" rx=".5"/><rect x="19" y="6.5" width="2" height="2" rx=".5"/><rect x="4" y="17.5" width="2" height="2" rx=".5"/><rect x="9" y="17.5" width="2" height="2" rx=".5"/><rect x="14" y="17.5" width="2" height="2" rx=".5"/><rect x="19" y="17.5" width="2" height="2" rx=".5"/></g><circle cx="17.5" cy="13" r="3.4" fill="none" stroke="#d42f3f" stroke-width="1.8"/></svg>
+    <h1>文件提取工作台</h1><span class="ver" id="ver"></span>
+  </div>
+  <div class="sys"><span id="sysLabel"><i class="dot"></i>正在连接…</span></div>
+  <button class="ghost sm" id="btnHistory">执行记录</button>
+  <button class="ghost sm" id="btnSettings">设置</button>
+  <button class="ghost sm" id="btnTheme" title="切换深浅色">深浅色</button>
+  <button class="ghost sm" id="btnQuit">退出</button>
+</header>
+
+<div id="fileBanner" class="banner err" hidden style="margin:16px">这个页面需要由启动脚本打开才能工作。请关闭本页，双击工具文件夹里的启动脚本（Windows：start-windows.bat；macOS：start-mac.command）。</div>
+
+<div class="shell" id="shell">
+  <!-- ======================= 左栏 ======================= -->
+  <aside class="col col-left">
+    <section class="sec">
+      <div class="sec-h"><h2>来源文件夹</h2><button class="sm" id="btnAddSrc">添加…</button></div>
+      <div class="src-list" id="srcList"></div>
+      <div class="row nowrap" style="margin-top:8px"><input type="text" id="srcInput" class="grow" placeholder="也可以直接粘贴路径后回车"></div>
+      <div class="row" style="margin-top:10px">
+        <label class="muted" for="depthSel">扫描深度</label>
+        <select id="depthSel" style="height:28px"><option value="0">全部子文件夹</option><option value="1">只看第 1 层</option><option value="2">到第 2 层</option><option value="3">到第 3 层</option></select>
+        <label class="check"><input type="checkbox" id="skipHidden">跳过隐藏文件</label>
+      </div>
+      <div class="idx-status" id="idxStatus"></div>
+    </section>
+    <section class="sec" id="dirSec" hidden>
+      <div class="sec-h"><h2>一级文件夹</h2><button class="ghost sm" id="btnDirAll">全选</button></div>
+      <p class="hint" style="margin:-4px 0 6px">取消勾选的文件夹不参与筛选。数字为“符合 / 全部”。</p>
+      <div class="dir-list" id="dirList"></div>
+    </section>
+    <section class="sec">
+      <div class="sec-h"><h2>常用场景</h2></div>
+      <div class="tpl-list" id="tplList"></div>
+    </section>
+    <section class="sec">
+      <div class="sec-h"><h2>我的方案</h2><button class="sm" id="btnSavePreset">保存当前</button></div>
+      <div class="tpl-list" id="presetList"></div>
+      <div class="row" style="margin-top:8px"><button class="ghost sm" id="btnExport">导出为文件</button><button class="ghost sm" id="btnImport">从文件导入</button><input type="file" id="importFile" accept=".json" hidden></div>
+    </section>
+  </aside>
+
+  <!-- ======================= 中栏 ======================= -->
+  <main class="col col-main" id="main">
+    <div class="ask">
+      <div class="ask-row">
+        <label for="askInput" class="faint" hidden>用一句话描述</label>
+        <textarea id="askInput" rows="1" placeholder="用一句话说你要哪些文件，例如：每个机位今天 11:38 到 11:41 拍的照片"></textarea>
+        <button class="primary go" id="btnAsk">理解</button>
+      </div>
+      <div class="ask-foot">
+        <div class="seg" id="engineSeg"><button data-v="local" aria-pressed="true">本地解析</button><button data-v="llm" aria-pressed="false">大模型</button></div>
+        <div class="ask-examples" id="askExamples"></div>
+      </div>
+      <div class="interp" id="interp" hidden></div>
+    </div>
+
+    <div id="queryErr" class="banner err" hidden></div>
+
+    <div class="card">
+      <div class="card-h">
+        <h2>条件</h2>
+        <select id="topMode" style="height:28px"><option value="all">全部满足</option><option value="any">满足任一</option><option value="none">都不满足（排除）</option></select>
+        <div class="count-big"><b id="cntMatched">0</b><span id="cntTotal">/ 0 个文件</span><span id="qBusy"></span></div>
+      </div>
+      <div class="card-b">
+        <div class="rules" id="rules"></div>
+        <div class="rules-foot">
+          <button class="sm" id="btnAddCond">＋ 条件</button>
+          <button class="sm" id="btnAddGroup">＋ 条件组</button>
+          <button class="sm" id="btnList">按名单查找…</button>
+          <span style="flex:1"></span>
+          <button class="ghost sm" id="btnClearRules">清空条件</button>
+        </div>
+        <div class="limit-row" id="limitRow"></div>
+        <p class="summary" id="summary"></p>
+      </div>
+    </div>
+
+    <div class="card" id="facetCard">
+      <div class="card-h">
+        <div class="seg facet-tabs" id="facetTabs"><button data-v="time" aria-pressed="true">时间分布</button><button data-v="kind" aria-pressed="false">类型</button><button data-v="dir" aria-pressed="false">文件夹</button></div>
+        <span style="flex:1"></span>
+        <span id="histCtl" class="row"></span>
+      </div>
+      <div class="card-b" id="facetBody"></div>
+    </div>
+
+    <section class="lightbox-table" id="results">
+      <div class="res-h">
+        <h2>看片台</h2><span class="faint" id="resInfo"></span>
+        <span class="sp"></span>
+        <input type="text" id="resFilter" placeholder="在已加载的结果中查找" style="height:28px;width:170px">
+        <select id="sortSel" style="height:28px"><option value="path">按位置</option><option value="name">按文件名</option><option value="time">按时间</option><option value="size">按大小</option></select>
+        <div class="seg" id="viewSeg"><button data-v="grid" aria-pressed="true">网格</button><button data-v="list" aria-pressed="false">列表</button></div>
+        <button class="sm" id="btnPick" aria-pressed="false" title="在结果里点选几个想要的文件，让工具推断规则">挑样例</button>
+      </div>
+      <div class="pick-bar" id="pickBar" hidden></div>
+      <div id="listReport"></div>
+      <div id="resBody"></div>
+      <div class="more" id="moreBox" hidden><button id="btnMore">加载更多</button></div>
+    </section>
+  </main>
+
+  <!-- ======================= 右栏 ======================= -->
+  <aside class="col col-right">
+    <section class="sec">
+      <div class="sec-h"><h2>放到哪里</h2></div>
+      <label class="field-label" for="destRoot" style="margin-top:0">目标文件夹</label>
+      <div class="row nowrap"><input type="text" id="destRoot" class="grow" placeholder="例如 E:\交付"><button class="sm" id="btnDest">浏览…</button></div>
+      <label class="field-label" for="destTpl">子文件夹怎么建</label>
+      <input type="text" id="destTpl" class="mono" style="width:100%">
+      <div class="var-chips" id="tplVars"></div>
+      <details style="margin-top:10px"><summary class="muted" style="cursor:pointer">重命名文件（可选）</summary>
+        <input type="text" id="destRename" class="mono" style="width:100%;margin-top:6px" placeholder="留空 = 保持原名，例如 {一级文件夹}_{文件名}">
+        <p class="hint" style="margin-top:4px">没写扩展名时会自动补上原扩展名。</p>
+      </details>
+      <p class="example" id="destExample"></p>
+    </section>
+    <section class="sec">
+      <div class="sec-h"><h2>目标结构预览</h2><span class="faint" id="treeInfo"></span></div>
+      <div class="tree" id="destTree"><div class="faint">选择目标文件夹后显示</div></div>
+      <div class="status-line" id="statusLine"></div>
+      <p class="banner err" id="destErr" hidden style="margin:8px 0 0"></p>
+    </section>
+    <section class="sec">
+      <div class="sec-h"><h2>怎么处理</h2></div>
+      <div class="seg" id="actionSeg">
+        <button data-v="copy" aria-pressed="true">拷贝</button><button data-v="move" aria-pressed="false">移动</button><button data-v="link" aria-pressed="false">链接</button><button data-v="zip" aria-pressed="false">打包</button><button data-v="list" aria-pressed="false">只出清单</button>
+      </div>
+      <p class="hint" id="actionHint" style="margin-top:6px"></p>
+      <div id="zipBox" hidden><label class="field-label" for="zipName">压缩包名称</label><input type="text" id="zipName" class="mono" style="width:100%"></div>
+      <label class="field-label" for="conflictSel">目标已有同名文件时</label>
+      <select id="conflictSel" style="width:100%">
+        <option value="rename">自动改名（完全相同的跳过）</option>
+        <option value="skip">跳过</option>
+        <option value="newer">源文件较新时覆盖</option>
+        <option value="overwrite">覆盖（原文件会备份，可撤销）</option>
+      </select>
+      <div style="display:flex;flex-direction:column;gap:6px;margin-top:10px">
+        <label class="check"><input type="checkbox" id="optTimes">保留原文件的时间信息</label>
+        <label class="check"><input type="checkbox" id="optVerify">拷贝后校验大小</label>
+        <label class="check"><input type="checkbox" id="optDedupe">内容完全相同的文件只保留一个</label>
+      </div>
+      <button class="primary run-btn" id="btnRun">开始</button>
+      <div class="row" style="margin-top:10px">
+        <label class="check"><input type="checkbox" id="optWatch">持续监视新文件</label>
+        <span class="muted">每</span><input type="number" id="watchSec" class="w-num" min="3" style="width:64px;height:28px"><span class="muted">秒</span>
+      </div>
+      <p class="hint" style="margin-top:4px">适合拍摄现场：新照片写入来源后自动按规则处理，点“停止”结束。</p>
+      <div class="prog" id="prog" hidden>
+        <div class="prog-h"><span id="progPhase"></span><span id="progTime" class="num"></span></div>
+        <div class="bar-outer"><i id="progBar"></i></div>
+        <div class="stats">
+          <div><b id="sDone">0</b><span>完成</span></div>
+          <div><b id="sSkip">0</b><span>跳过</span></div>
+          <div><b id="sFail">0</b><span>失败</span></div>
+        </div>
+        <p id="progMsg" style="margin-top:8px;font-size:13px"></p>
+        <div class="after" id="afterBtns"></div>
+        <details style="margin-top:8px"><summary class="muted" style="cursor:pointer">运行日志</summary><div class="log" id="log"></div></details>
+      </div>
+    </section>
+  </aside>
+</div>
+
+<!-- ======================= 弹窗 ======================= -->
+<dialog id="dirDlg"><div class="dlg">
+  <div class="dlg-h"><h3 id="dirTitle">选择文件夹</h3><button class="ghost sm" data-close>关闭</button></div>
+  <div class="dlg-b">
+    <div class="roots" id="dirRoots"></div>
+    <div class="row nowrap" style="margin-bottom:8px"><button class="sm icon" id="dirUp" title="上一级" aria-label="上一级">↑</button><input type="text" id="dirPath" class="grow mono" placeholder="输入路径后按回车"></div>
+    <div class="dirlist" id="dirEntries"></div>
+    <p class="err-text" id="dirErr" style="margin-top:6px;font-size:12.5px"></p>
+  </div>
+  <div class="dlg-f"><button class="ghost" id="dirNative">用系统窗口选择…</button><span class="sp"></span><button data-close>取消</button><button class="primary" id="dirOk">选择这个文件夹</button></div>
+</div></dialog>
+
+<dialog id="listDlg" class="wide"><div class="dlg">
+  <div class="dlg-h"><h3>按名单查找</h3><button class="ghost sm" data-close>关闭</button></div>
+  <div class="dlg-b">
+    <p class="muted" style="margin-bottom:8px">把客户给的编号或文件名粘贴进来（每行一个，或从 Excel 直接复制几列），也可以导入 .xlsx / .csv / .txt。</p>
+    <textarea id="listText" rows="7" style="width:100%" placeholder="0123&#10;0456&#10;IMG_0789"></textarea>
+    <div class="row" style="margin-top:8px"><button class="sm" id="listParse">识别</button><button class="sm" id="listFileBtn">导入文件…</button><input type="file" id="listFile" accept=".xlsx,.xlsm,.csv,.txt,.tsv" hidden><span class="faint" id="listInfo"></span></div>
+    <div id="listPreview"></div>
+  </div>
+  <div class="dlg-f"><span class="sp"></span><button data-close>取消</button><button class="primary" id="listApply" disabled>加入条件</button></div>
+</div></dialog>
+
+<dialog id="inferDlg"><div class="dlg">
+  <div class="dlg-h"><h3>根据样例推断的共同点</h3><button class="ghost sm" data-close>关闭</button></div>
+  <div class="dlg-b" id="inferBody"></div>
+  <div class="dlg-f"><span class="faint sp" id="inferInfo"></span><button id="inferAppend">追加到条件</button><button class="primary" id="inferReplace">替换当前条件</button></div>
+</div></dialog>
+
+<dialog id="settingsDlg"><div class="dlg">
+  <div class="dlg-h"><h3>设置</h3><button class="ghost sm" data-close>关闭</button></div>
+  <div class="dlg-b">
+    <h4 style="margin:0 0 6px">照片没有拍摄时间时</h4>
+    <select id="setFallback" style="width:100%"><option value="mtime">改用修改时间</option><option value="ctime">改用创建时间</option><option value="none">视为不符合</option></select>
+    <p class="hint" style="margin-top:4px">视频、截图、编辑过的图片常常没有拍摄时间。</p>
+    <h4 style="margin:18px 0 6px">大模型理解（可选）</h4>
+    <p class="hint">开启后“一句话”可以交给大模型理解。只发送你输入的那句话、字段说明、文件夹名和少量文件名样本，不发送文件内容。API Key 保存在本工具文件夹的 settings.json 中。</p>
+    <label class="field-label" for="setProvider">接口类型</label>
+    <select id="setProvider" style="width:100%"><option value="anthropic">Anthropic Claude</option><option value="openai">兼容 OpenAI 格式（DeepSeek、通义千问、Kimi、本地 Ollama 等）</option></select>
+    <label class="field-label" for="setBase">接口地址</label><input type="text" id="setBase" class="mono" style="width:100%">
+    <label class="field-label" for="setModel">模型名称</label><input type="text" id="setModel" class="mono" style="width:100%">
+    <label class="field-label" for="setKey">API Key</label><input type="password" id="setKey" style="width:100%" autocomplete="off">
+    <div class="row" style="margin-top:10px"><button class="sm" id="setTest">测试连接</button><button class="ghost sm" id="setClearKey">清除已保存的 Key</button><span id="setTestMsg" class="muted"></span></div>
+  </div>
+  <div class="dlg-f"><span class="sp"></span><button data-close>取消</button><button class="primary" id="setSave">保存</button></div>
+</div></dialog>
+
+<dialog id="histDlg" class="wide"><div class="dlg">
+  <div class="dlg-h"><h3>执行记录</h3><button class="ghost sm" data-close>关闭</button></div>
+  <div class="dlg-b" id="histBody"></div>
+</div></dialog>
+
+<dialog id="confirmDlg"><div class="dlg">
+  <div class="dlg-h"><h3 id="cfTitle">确认</h3></div>
+  <div class="dlg-b" id="cfBody"></div>
+  <div class="dlg-f"><span class="sp"></span><button data-close id="cfCancel">取消</button><button class="primary" id="cfOk">确定</button></div>
+</div></dialog>
+
+<dialog id="promptDlg"><div class="dlg">
+  <div class="dlg-h"><h3 id="pmTitle"></h3></div>
+  <div class="dlg-b"><input type="text" id="pmInput" style="width:100%"></div>
+  <div class="dlg-f"><span class="sp"></span><button data-close>取消</button><button class="primary" id="pmOk">确定</button></div>
+</div></dialog>
+
+<dialog id="lbDlg" class="wide"><div class="dlg">
+  <div class="dlg-h"><h3 id="lbTitle"></h3><button class="sm" id="lbMark">标为样例</button><button class="sm" id="lbReveal">在文件夹中显示</button><button class="ghost sm" data-close>关闭</button></div>
+  <div class="lb"><div class="lb-pic" id="lbPic"></div><div class="lb-info" id="lbInfo"></div></div>
+</div></dialog>
+
+<div class="toast" id="toast" hidden></div>
+<script src="app.js"></script>
+</body>
+</html>

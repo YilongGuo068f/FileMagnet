@@ -1,0 +1,35 @@
+{
+  "name": "多机位：按创建时间段提取",
+  "description": "同上，但按文件的创建时间判断（客户最初的要求）",
+  "order": 2,
+  "plan": {
+    "rule": {
+      "mode": "all",
+      "items": [
+        {
+          "id": "t1",
+          "field": "ctime",
+          "op": "timeOfDay",
+          "value": [
+            "11:38",
+            "11:41"
+          ]
+        },
+        {
+          "id": "t2",
+          "field": "kind",
+          "op": "in",
+          "value": [
+            "photo",
+            "raw"
+          ]
+        }
+      ]
+    },
+    "dest": {
+      "template": "{一级文件夹}/{子目录}",
+      "action": "copy",
+      "conflict": "rename"
+    }
+  }
+}

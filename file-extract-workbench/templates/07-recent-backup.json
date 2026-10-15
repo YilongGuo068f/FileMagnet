@@ -1,0 +1,26 @@
+{
+  "name": "最近新增文件备份",
+  "description": "最近 1 天修改过的文件，保持原有目录结构备份",
+  "order": 7,
+  "plan": {
+    "rule": {
+      "mode": "all",
+      "items": [
+        {
+          "id": "t1",
+          "field": "mtime",
+          "op": "recent",
+          "value": {
+            "amount": 1,
+            "unit": "days"
+          }
+        }
+      ]
+    },
+    "dest": {
+      "template": "{相对目录}",
+      "action": "copy",
+      "conflict": "newer"
+    }
+  }
+}

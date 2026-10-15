@@ -1,0 +1,35 @@
+{
+  "name": "按编号范围提取",
+  "description": "例如 IMG_0120 到 IMG_0350，各文件夹分开存放",
+  "order": 4,
+  "plan": {
+    "rule": {
+      "mode": "all",
+      "items": [
+        {
+          "id": "t1",
+          "field": "num",
+          "op": "between",
+          "value": [
+            "120",
+            "350"
+          ]
+        },
+        {
+          "id": "t2",
+          "field": "kind",
+          "op": "in",
+          "value": [
+            "photo",
+            "raw"
+          ]
+        }
+      ]
+    },
+    "dest": {
+      "template": "{一级文件夹}",
+      "action": "copy",
+      "conflict": "rename"
+    }
+  }
+}

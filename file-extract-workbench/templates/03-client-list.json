@@ -1,0 +1,28 @@
+{
+  "name": "按名单找文件（客户选片）",
+  "description": "粘贴客户给的编号或文件名，不管在哪个子文件夹都能找出来",
+  "order": 3,
+  "plan": {
+    "rule": {
+      "mode": "all",
+      "items": [
+        {
+          "id": "t1",
+          "field": "list",
+          "op": "match",
+          "value": {
+            "mode": "stem",
+            "keys": [],
+            "rows": [],
+            "columns": []
+          }
+        }
+      ]
+    },
+    "dest": {
+      "template": "",
+      "action": "copy",
+      "conflict": "rename"
+    }
+  }
+}

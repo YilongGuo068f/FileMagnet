@@ -1,0 +1,104 @@
+{
+  "name": "示例2：今天 11:38-11:41（拍摄时间 EXIF，含视频）",
+  "savedAt": "2026-10-15 12:00:00",
+  "tool": "mcct",
+  "version": 1,
+  "config": {
+    "pairs": [
+      {
+        "source": "",
+        "target": ""
+      }
+    ],
+    "cameraMode": "subfolders",
+    "cameraInclude": "",
+    "cameraExclude": "",
+    "recursive": true,
+    "keepStructure": true,
+    "targetTemplate": "{camera}",
+    "cameraOverrides": {},
+    "time": {
+      "enabled": true,
+      "field": "exif",
+      "exifFallback": "modified",
+      "mode": "daily",
+      "dateMode": "today",
+      "date": "",
+      "windows": [
+        {
+          "start": "11:38",
+          "end": "11:41"
+        }
+      ],
+      "ranges": [
+        {
+          "start": "",
+          "end": ""
+        }
+      ],
+      "recentAmount": 10,
+      "recentUnit": "minutes"
+    },
+    "ext": {
+      "mode": "list",
+      "groups": [
+        "photo",
+        "raw",
+        "video"
+      ],
+      "custom": "",
+      "list": [
+        "jpg",
+        "jpeg",
+        "png",
+        "heic",
+        "heif",
+        "tif",
+        "tiff",
+        "bmp",
+        "webp",
+        "cr2",
+        "cr3",
+        "crw",
+        "nef",
+        "nrw",
+        "arw",
+        "srf",
+        "sr2",
+        "dng",
+        "raf",
+        "orf",
+        "rw2",
+        "pef",
+        "srw",
+        "3fr",
+        "iiq",
+        "x3f",
+        "erf",
+        "kdc",
+        "mos",
+        "mef",
+        "rwl"
+      ]
+    },
+    "name": {
+      "include": "",
+      "exclude": "",
+      "regex": false
+    },
+    "size": {
+      "minMB": null,
+      "maxMB": null
+    },
+    "limit": {
+      "enabled": false,
+      "count": 10,
+      "order": "newest"
+    },
+    "skipHidden": true,
+    "action": "copy",
+    "conflict": "rename",
+    "preserveTimes": true,
+    "verify": true
+  }
+}

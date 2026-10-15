@@ -1,0 +1,6 @@
+python313.zip
+.
+..\..\engine
+
+# Uncomment to run site.main() automatically
+#import site
